@@ -11,11 +11,31 @@ I've asked that the old perl libraries be opensourced.  You can ask too [by usin
 The endpoint is at https://acme.com/machine.aspx
 
 You need a minimum of three arguments in the GET string
+
 1. transaction
 2. username
 3. password
 
-Other arguments are specified with *arg#*, numbered as the method requires.  The transaction is essentially the action or query that you want to issue to the server.  Sometimes the [method names in the MoveIt DMZ API documentation](https://moveitsupport.ipswitch.com/SUPPORT/miapiwin/online-manual.htm) translate to their lcased transaction names.  Sometimes, they don't quite match
+Other arguments are specified with *arg#*, numbered as the method requires.  The transaction is essentially the action or query that you want to issue to the server.  Sometimes the [method names in the MoveIt DMZ API documentation](https://moveitsupport.ipswitch.com/SUPPORT/miapiwin/online-manual.htm) translate to their *lcased* transaction names.  Sometimes, they don't quite match.
+
+If you enter an invalid transaction name (thanks to zero documentation), you'll get this error:
+
+```bash
+curl 'https://files.acme.com/machine.aspx?transaction=bogusxaction&username=bob&password=seekret&arg01=georgiabest-030&arg02=bob'
+```
+```xml
+<?xml version="1.0"?>
+<siLockResponse><ErrorCode>2320</ErrorCode><ErrorDescription>Invalid transaction 'bogusxaction'</ErrorDescription><Payload></Payload></siLockResponse>
+```
+
+If you're missing a required argument or if the argument value given is invalid, you'll probably see something helpful like this:
+```bash
+curl 'https://files.acme.com/machine.aspx?transaction=usergroupchangemembership1&username=bob&password=seekret&arg02=bob'
+```
+```xml
+<?xml version="1.0"?>
+<siLockResponse><ErrorCode>2850</ErrorCode><ErrorDescription>Could not locate group ''</ErrorDescription><Payload>False</Payload></siLockResponse>
+```
 
 # Tools
 Interacting primitively with the API is eased by some great tools
@@ -25,7 +45,9 @@ Interacting primitively with the API is eased by some great tools
 * [XML::XPath](http://search.cpan.org/~msergeant/XML-XPath-1.13/XPath.pm) - for searching the XML responses from the command-line (xpath command included with libxml-xpath-perl Ubuntu package)
 
 # What Happens If The Server Isn't Licensed for API Use?
+```bash
 curl 'https://acme.com/machine.aspx?transaction=folderlist&username=bob&password=seekret'
+```
 ```xml
 <?xml version="1.0"?>
 <siLockResponse><ErrorCode>3400</ErrorCode><ErrorDescription>Licensing error: This key does not enable this feature.</ErrorDescription><Payload></Payload></siLockResponse>
@@ -33,17 +55,24 @@ curl 'https://acme.com/machine.aspx?transaction=folderlist&username=bob&password
 
 # Examples
 ## list folders
+```bash
 curl 'https://files.acme.com/machine.aspx?transaction=folderlist&username=bob&password=seekret'
+```
 ## make group member an admin
+```bash
 curl 'https://files.acme.com/machine.aspx?transaction=usergroupchangemembership&username=bob&password=seekret&arg01=coolkids&arg02=bob&arg03=2'
+```
 ## list a user's groups
+```bash
 curl 'https://files.acme.com/machine.aspx?transaction=usergrouplist&username=bob&password=seekret&arg01=bob'
+```
 
 here's an example of xpath usage and output:
+```bash
 curl 'https://files.acme.com/machine.aspx?transaction=usergrouplist&username=bob&password=seekret&arg01=bob'|xpath -e "//Name"
-
+```
 ```xml
-<Name>georgiaview-930</Name>
-<Name>georgiaview-980</Name>
+<Name>demo-930</Name>
+<Name>demo-980</Name>
 <Name>test-01</Name>
 ```
